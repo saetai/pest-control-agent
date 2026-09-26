@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-агент для Pest Control — от 20 к 200 млн</title>
+<style>
+  :root{
+    --bg:#0a0e14; --bg2:#0f1620; --card:#141c28;
+    --line:#1e2a3a; --txt:#e8eef6; --mut:#8a99ad; --acc:#25d07a;
+    --acc2:#3b9dff; --warn:#ffb020; --danger:#ff5c6c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--txt); line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px}
+  section{padding:80px 0; border-bottom:1px solid var(--line)}
+  h1{font-size:clamp(32px,5vw,58px); line-height:1.08; font-weight:800; letter-spacing:-.02em}
+  h2{font-size:clamp(24px,3.5vw,40px); font-weight:800; letter-spacing:-.01em; margin-bottom:8px}
+  h3{font-size:20px; font-weight:700; margin-bottom:10px}
+  p{color:var(--mut); font-size:17px}
+  .lead{font-size:20px; color:var(--txt)}
+  .acc{color:var(--acc)} .acc2{color:var(--acc2)} .warn{color:var(--warn)} .danger{color:var(--danger)}
+  .tag{display:inline-block; font-size:13px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--acc); background:rgba(37,208,122,.1); border:1px solid rgba(37,208,122,.25);
+    padding:6px 14px; border-radius:100px; margin-bottom:24px}
+
+  /* HERO */
+  .hero{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(59,157,255,.18), transparent 60%),
+      radial-gradient(900px 500px at 0% 20%, rgba(37,208,122,.14), transparent 55%),
+      var(--bg);
+    padding:110px 0 90px;
+  }
+  .hero h1 span{color:var(--acc)}
+  .hero .lead{margin-top:24px; max-width:720px}
+  .metrics{display:flex; gap:16px; margin-top:44px; flex-wrap:wrap}
+  .metric{flex:1; min-width:180px; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:24px}
+  .metric .n{font-size:38px; font-weight:800; letter-spacing:-.02em}
+  .metric .l{font-size:14px; color:var(--mut); margin-top:4px}
+
+  /* GRID CARDS */
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; margin-top:36px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:28px;
+    transition:transform .2s, border-color .2s}
+  .card:hover{transform:translateY(-4px); border-color:rgba(59,157,255,.4)}
+  .card .num{font-size:14px; font-weight:700; color:var(--acc2); margin-bottom:12px}
+  .card p{font-size:15px}
+
+  /* FUNNEL */
+  .formula{background:var(--bg2); border:1px solid var(--line); border-left:4px solid var(--acc);
+    border-radius:12px; padding:24px 28px; font-size:18px; margin:28px 0; font-family:'DM Mono',monospace}
+  .formula b{color:var(--acc)}
+
+  /* TABLE */
+  table{width:100%; border-collapse:collapse; margin-top:28px; background:var(--card);
+    border-radius:16px; overflow:hidden; border:1px solid var(--line)}
+  th{background:var(--bg2); text-align:left; padding:16px 20px; font-size:14px; color:var(--mut);
+    text-transform:uppercase; letter-spacing:.05em; font-weight:700}
+  td{padding:16px 20px; border-top:1px solid var(--line); font-size:15px; vertical-align:top}
+  td .price{color:var(--acc); font-weight:700; white-space:nowrap}
+
+  /* OPTION BLOCKS */
+  .opt{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:32px; margin-top:24px}
+  .opt-head{display:flex; align-items:center; gap:14px; margin-bottom:6px; flex-wrap:wrap}
+  .badge{font-size:13px; font-weight:800; padding:5px 12px; border-radius:8px}
+  .b-green{background:rgba(37,208,122,.15); color:var(--acc)}
+  .b-blue{background:rgba(59,157,255,.15); color:var(--acc2)}
+  .b-warn{background:rgba(255,176,32,.15); color:var(--warn)}
+  .risk{background:rgba(255,92,108,.08); border:1px solid rgba(255,92,108,.25); border-radius:12px;
+    padding:16px 20px; margin-top:18px; font-size:15px}
+  .risk b{color:var(--danger)}
+  .pros{background:rgba(37,208,122,.06); border:1px solid rgba(37,208,122,.2); border-radius:12px;
+    padding:16px 20px; margin-top:14px; font-size:15px}
+  ul{list-style:none; margin-top:12px}
+  li{padding-left:26px; position:relative; margin-bottom:10px; font-size:15px; color:var(--mut)}
+  li::before{content:'→'; position:absolute; left:0; color:var(--acc2); font-weight:700}
+  li.check::before{content:'✓'; color:var(--acc)}
+  li.x::before{content:'⚠'; color:var(--warn)}
+
+  /* REC */
+  .rec{background:linear-gradient(135deg, rgba(37,208,122,.1), rgba(59,157,255,.08));
+    border:1px solid rgba(37,208,122,.3)}
+  .steps{counter-reset:s; margin-top:24px}
+  .step{display:flex; gap:18px; padding:18px 0; border-bottom:1px solid var(--line)}
+  .step:last-child{border:none}
+  .step .dot{flex-shrink:0; width:40px; height:40px; border-radius:50%; background:var(--acc);
+    color:#04120a; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:18px}
+  .step .t{font-weight:700; color:var(--txt); font-size:17px}
+  .step .d{font-size:15px; color:var(--mut)}
+
+  /* CTA */
+  .cta{text-align:center; background:
+    radial-gradient(800px 400px at 50% 0%, rgba(37,208,122,.15), transparent 60%), var(--bg2)}
+  .btn{display:inline-block; background:var(--acc); color:#04120a; font-weight:800; font-size:18px;
+    padding:18px 44px; border-radius:12px; text-decoration:none; margin-top:28px; transition:transform .15s}
+  .btn:hover{transform:scale(1.04)}
+  .foot{padding:36px 0; text-align:center; color:var(--mut); font-size:14px}
+  @media(max-width:640px){ section{padding:56px 0} .hero{padding:70px 0 56px} }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="wrap">
+    <span class="tag">AI-агент для отдела продаж · Pest Control</span>
+    <h1>Пробить потолок <span>20 млн</span><br>и выйти на <span>200 млн</span> в год</h1>
+    <p class="lead">У компании уже есть самое дорогое в продажах — закрытие сделки со встречи <b class="acc">90–95%</b>. Значит рост в 10× — это не про качество продаж, а про <b>количество квалифицированных встреч на входе</b>. Туда мы и ставим ИИ-агента.</p>
+    <div class="metrics">
+      <div class="metric"><div class="n acc">90–95%</div><div class="l">закрытие со встречи (уже есть)</div></div>
+      <div class="metric"><div class="n acc2">×10</div><div class="l">цель роста выручки</div></div>
+      <div class="metric"><div class="n">24/7</div><div class="l">агент ищет и квалифицирует без выходных</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEM / MATH -->
+<section>
+  <div class="wrap">
+    <h2>Единственный рычаг роста — верх воронки</h2>
+    <p class="lead" style="max-width:760px; margin-top:12px">Раз со встречи закрывается почти каждый, вся выручка описывается одной формулой:</p>
+    <div class="formula">
+      Выручка = <b>кол-во встреч/мес</b> × закрытие (0.9) × средний чек × 12
+    </div>
+    <p style="max-width:760px">Умножать закрытие уже некуда — оно почти 100%. Остаётся два рычага: <b class="acc">больше квалифицированных встреч</b> (это работа ИИ) и <b class="acc">больше средний чек</b> (допродажи, тарифы). Поэтому весь агент строится вокруг одной цифры — <b>сколько встреч в неделю он ставит в календарь</b>.</p>
+  </div>
+</section>
+
+<!-- CONVEYOR -->
+<section>
+  <div class="wrap">
+    <h2>Как работает ИИ-агент: конвейер из 4 звеньев</h2>
+    <p>Не «один бот делает всё», а последовательный конвейер — так это реально работает.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="num">ЗВЕНО 1</div>
+        <h3>Поиск лидов</h3>
+        <p>Собирает базу производств по кодам <b>ОКВЭД</b>. Ключевой крючок — <b class="acc">СанПиН</b>: для пищёвки, складов, HoReCa, фармы дезинсекция обязательна по закону. Мы не «продаём услугу» — мы закрываем предписание.</p>
+      </div>
+      <div class="card">
+        <div class="num">ЗВЕНО 2</div>
+        <h3>Первое касание</h3>
+        <p>Персонализированный выход на контакт: звонок, мессенджер или email — под тёплость лида. Не спам-шаблон, а сообщение под конкретное производство.</p>
+      </div>
+      <div class="card">
+        <div class="num">ЗВЕНО 3</div>
+        <h3>Квалификация</h3>
+        <p>Задаёт 4–5 вопросов: есть ли производство, какой ОКВЭД, есть ли предписание/договор, кто ЛПР. Отсеивает нецелевых, догревает целевых.</p>
+      </div>
+      <div class="card">
+        <div class="num">ЗВЕНО 4</div>
+        <h3>Запись на встречу</h3>
+        <p>Целевого лида сам записывает на Zoom или живую встречу в календарь. Дальше — ваш продавец с закрытием 90%.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEAD BASE -->
+<section>
+  <div class="wrap">
+    <h2>Фундамент — база контактов</h2>
+    <p style="max-width:760px">Общий слой для всех каналов. На плохой базе любой канал сольёт деньги. Собираем чистую, сегментированную по ОКВЭД базу.</p>
+    <table>
+      <tr><th>Источник</th><th>Что даёт</th></tr>
+      <tr><td><b>2ГИС / Яндекс.Карты</b></td><td>Название, телефон, адрес производств по категориям</td></tr>
+      <tr><td><b>Контур.Фокус / СБИС / Rusprofile</b></td><td>Фильтр по ОКВЭД (пищёвка 10.xx, склады 52.10, HoReCa 56.xx), ИНН, ЛПР, финансы</td></tr>
+      <tr><td><b>Тендерные площадки</b></td><td>Кто уже покупал дезинсекцию → тёплые, с готовым бюджетом</td></tr>
+    </table>
+    <p style="margin-top:20px"><b class="acc">Результат:</b> чистая, сегментированная по ОКВЭД база на несколько тысяч производств.</p>
+  </div>
+</section>
+
+<!-- CHANNELS -->
+<section>
+  <div class="wrap">
+    <h2>Каналы аутрича: варианты, цены, риски</h2>
+
+    <!-- EMAIL -->
+    <div class="opt">
+      <div class="opt-head"><span class="badge b-warn">B1</span><h3 style="margin:0">Email-рассылка от имени агента</h3></div>
+      <p>Массовый охват холодного хвоста базы.</p>
+      <ul>
+        <li>Отдельный прогретый домен — чтобы репутация основного оставалась чистой</li>
+        <li>Сервис B2B-рассылки: Lemlist / Instantly / Smartlead или Mailganer / Sendsay / DashaMail</li>
+        <li>Настройка SPF / DKIM / DMARC и прогрев домена для высокой доставляемости</li>
+        <li>ИИ пишет персонализированный текст под каждого получателя, а не один шаблон на всех</li>
+      </ul>
+      <div class="pros"><b class="acc">Плюс:</b> масштабируется на тысячи адресов, работает как автоматический догрев.</div>
+    </div>
+
+    <!-- CALLS -->
+    <div class="opt">
+      <div class="opt-head"><span class="badge b-blue">B2</span><h3 style="margin:0">Звонки — обзвон производств</h3></div>
+      <p><b>B2a. ИИ-голосовой робот</b> — звонит и говорит сам.</p>
+      <ul>
+        <li>Через: Zvonobot, Neuro.net, Tinkoff VoiceKit, Voximplant, Dasha.ai</li>
+        <li class="check">Сотни звонков в день, не устаёт, единый скрипт</li>
+        <li class="check">Идеален для первичного «прозвона» большой холодной базы</li>
+      </ul>
+      <p style="margin-top:20px"><b>B2b. ИИ-ассистент живого менеджера</b> <span class="badge b-green">рекомендуем</span></p>
+      <ul>
+        <li class="check">Звонит человек — конверсия сохраняется на максимуме</li>
+        <li class="check">ИИ выбирает кому звонить (скоринг: кто обязан по СанПиН, у кого истёк тендер)</li>
+        <li class="check">Подсказывает скрипт, после звонка сам пишет резюме, ставит задачу, бронирует Zoom</li>
+      </ul>
+      <div class="pros"><b class="acc">Телефония:</b> Mango Office, Sipuni, Tinkoff, MTT — облачная АТС с записью и интеграцией. Для компании с закрытием 90% живой голос на горячих лидах даёт максимум сделок.</div>
+    </div>
+
+    <!-- MESSENGERS -->
+    <div class="opt">
+      <div class="opt-head"><span class="badge b-green">B3</span><h3 style="margin:0">Мессенджеры (Telegram / WhatsApp) — золотая середина</h3></div>
+      <ul>
+        <li class="check">Открываемость 70–90% против 10% у email</li>
+        <li class="check">Полноценный диалог и квалификация прямо в переписке</li>
+        <li class="check">Через официальный WhatsApp Business API (Wazzup, Chat2Desk, i2crm) или Telegram-бот</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- RECOMMENDATION -->
+<section>
+  <div class="wrap">
+    <div class="opt rec">
+      <div class="opt-head"><span class="badge b-green">РЕКОМЕНДАЦИЯ</span><h2 style="margin:0">Связка по тёплости лида</h2></div>
+      <p style="margin-bottom:8px">Не «email против звонков», а конвейер, где канал зависит от температуры лида:</p>
+      <div class="steps">
+        <div class="step"><div class="dot">1</div><div><div class="t">База по ОКВЭД + скоринг</div><div class="d">ИИ ранжирует: обязан по СанПиН + истёк тендер = горячий</div></div></div>
+        <div class="step"><div class="dot">2</div><div><div class="t">Горячие (топ-10%) → живой звонок с ИИ-ассистентом (B2b)</div><div class="d">Максимальная конверсия там, где деньги</div></div></div>
+        <div class="step"><div class="dot">3</div><div><div class="t">Тёплые → мессенджер с ИИ-диалогом (B3)</div><div class="d">Дёшево и высокая открываемость</div></div></div>
+        <div class="step"><div class="dot">4</div><div><div class="t">Холодный хвост → email с отдельного домена (B1)</div><div class="d">Массовый догрев</div></div></div>
+      </div>
+      <div class="pros">
+        <b class="acc">Сквозной приём:</b> заходить не «купите услугу», а через сервисный повод — «проверка соответствия СанПиН», «бесплатный аудит по предписаниям». Так лид сам заинтересован во встрече, и конверсия в разы выше.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="wrap">
+    <h2>Следующий шаг</h2>
+    <p class="lead" style="max-width:640px; margin:16px auto 0">Считаем воронку под цель 200 млн — сколько звонков и встреч в неделю реально нужно, — и запускаем первый канал как MVP.</p>
+    <a class="btn" href="#">Запустить MVP</a>
+  </div>
+</section>
+
+<div class="foot">
+  Коммерческое предложение · AI-агент квалификации лидов для Pest Control · 2026
+</div>
+
+</body>
+</html>
